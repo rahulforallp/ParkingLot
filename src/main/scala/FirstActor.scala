@@ -6,9 +6,8 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 
 
-object Init {
+object Factory {
   val list=ArrayBuffer.fill(10)(false)
-
   val system = ActorSystem("PL")
   val slotMonitor = system.actorOf(Props[SlotMonitor], "SlotMonitor")
   val attendant = system.actorOf(Props[Attendant], "Attendant")
@@ -17,15 +16,15 @@ object Init {
 class SlotMonitor extends Actor {
   def receive ={
     case "BookSlot" => {
-      val slot = Init.list.indexOf(false)
+      val slot = Factory.list.indexOf(false)
       if (slot >= 0) {
-        Init.list.update(slot, true)
+        Factory.list.update(slot, true)
       }
       sender ! slot
     }
     case slot:Int => {
       if (slot >= 0 && slot <=10) {
-        Init.list.update(slot, false)
+        Factory.list.update(slot, false)
       }
       sender ! slot
     }
@@ -36,22 +35,22 @@ class Attendant extends Actor {
   implicit val timeout = Timeout(5.seconds)
   def receive ={
     case "ParkMe" => {
-      val parkingSlot =Await.result((Init.slotMonitor ? "BookSlot").mapTo[Int], 5.seconds)
+      val parkingSlot =Await.result((Factory.slotMonitor ? "BookSlot").mapTo[Int], 5.seconds)
       println("Park at "+parkingSlot)
     }
-    case departMe:Int => val parkingSlot =Await.result((Init.slotMonitor ? departMe).mapTo[Int], 5.seconds)
+    case departMe:Int => val parkingSlot =Await.result((Factory.slotMonitor ? departMe).mapTo[Int], 5.seconds)
       println("Departed at "+parkingSlot)
   }
 }
 
 object StartParking extends App{
 
-  Init.attendant ! "ParkMe"
-  Init.attendant ! "ParkMe"
-  Init.attendant ! "ParkMe"
-  Init.attendant ! "ParkMe"
-  Init.attendant ! 2
-  Init.attendant ! "ParkMe"
+  Factory.attendant ! "ParkMe"
+  Factory.attendant ! "ParkMe"
+  Factory.attendant ! "ParkMe"
+  Factory.attendant ! "ParkMe"
+  Factory.attendant ! 2
+  Factory.attendant ! "ParkMe"
 
 }
 
